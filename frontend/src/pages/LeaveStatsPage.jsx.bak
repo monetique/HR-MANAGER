@@ -1,0 +1,299 @@
+import React, { useState, useRef } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
+import { Download, Users, Calendar, TrendingUp, AlertTriangle, Filter, FileText } from 'lucide-react'
+import api from '../api/client'
+
+const COLORS = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899']
+
+function KpiCard({ icon: Icon, label, value, color }) {
+  return (
+    <div className="card flex items-center gap-4">
+      <div className={`p-3 rounded-xl ${color}`}>
+        <Icon size={20} className="text-white" />
+      </div>
+      <div>
+        <p className="text-gray-400 text-xs">{label}</p>
+        <p className="text-white font-bold text-xl">{value ?? '—'}</p>
+      </div>
+    </div>
+  )
+}
+
+export default function LeaveStatsPage() {
+  const currentYear = new Date().getFullYear()
+  const [filters, setFilters] = useState({
+    year: currentYear,
+    date_from: '',
+    date_to: '',
+    employee_id: '',
+    leave_type_id: '',
+  })
+  const [appliedFilters, setAppliedFilters] = useState({ year: currentYear })
+  const printRef = useRef()
+
+  const { data: empData } = useQuery({
+    queryKey: ['employees-list'],
+    queryFn: () => api.get('/employees').then(r => r.data),
+  })
+  const { data: ltData } = useQuery({
+    queryKey: ['leave-types'],
+    queryFn: () => api.get('/leaves/types').then(r => r.data),
+  })
+
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['leave-stats', appliedFilters],
+    queryFn: () => api.get('/leaves/stats', { params: appliedFilters }).then(r => r.data),
+  })
+
+  const employees = empData?.employees?.filter(e => e.is_active) || []
+  const leaveTypes = ltData?.leave_types || []
+  const kpis = stats?.kpis || {}
+  const byType = stats?.by_type || []
+  const topEmployees = stats?.top_employees || []
+  const monthly = stats?.monthly || []
+  const details = stats?.details || []
+
+  const applyFilters = () => {
+    const f = { ...filters }
+    if (!f.date_from || !f.date_to) { delete f.date_from; delete f.date_to }
+    if (!f.employee_id) delete f.employee_id
+    if (!f.leave_type_id) delete f.leave_type_id
+    setAppliedFilters(f)
+  }
+
+  const resetFilters = () => {
+    setFilters({ year: currentYear, date_from: '', date_to: '', employee_id: '', leave_type_id: '' })
+    setAppliedFilters({ year: currentYear })
+  }
+
+  // Export CSV
+  const exportCSV = () => {
+    const headers = ['Matricule','Nom','Unite','Type','Code','Debut','Fin','Jours','Statut']
+    const rows = details.map(d => [
+      d.matricule, d.nom, d.unite || '', d.type_conge, d.code,
+      d.start_date?.slice(0,10), d.end_date?.slice(0,10),
+      d.days_count, d.status
+    ])
+    const csv = [headers, ...rows].map(r => r.join(';')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `stats_conges_${appliedFilters.year || currentYear}.csv`
+    a.click()
+  }
+
+  return (
+    <div className="space-y-6" ref={printRef}>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-white">Statistiques Congés</h1>
+          <p className="text-gray-400 text-sm mt-1">Analyse des congés et absences</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={exportCSV} className="btn-secondary flex items-center gap-2">
+            <FileText size={16} /> Export CSV
+          </button>
+          <button onClick={() => window.print()} className="btn-secondary flex items-center gap-2">
+            <Download size={16} /> PDF
+          </button>
+        </div>
+      </div>
+
+      {/* Filtres */}
+      <div className="card space-y-4">
+        <h2 className="font-semibold text-white flex items-center gap-2"><Filter size={16} /> Filtres</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <div>
+            <label className="label">Année</label>
+            <select className="input" value={filters.year} onChange={e => setFilters({...filters, year: e.target.value})}>
+              {[2024,2025,2026,2027].map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label">Date début</label>
+            <input type="date" className="input" value={filters.date_from}
+              onChange={e => setFilters({...filters, date_from: e.target.value})} />
+          </div>
+          <div>
+            <label className="label">Date fin</label>
+            <input type="date" className="input" value={filters.date_to}
+              onChange={e => setFilters({...filters, date_to: e.target.value})} />
+          </div>
+          <div>
+            <label className="label">Employé</label>
+            <select className="input" value={filters.employee_id} onChange={e => setFilters({...filters, employee_id: e.target.value})}>
+              <option value="">Tous</option>
+              {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name} — {e.matricule}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label">Type congé</label>
+            <select className="input" value={filters.leave_type_id} onChange={e => setFilters({...filters, leave_type_id: e.target.value})}>
+              <option value="">Tous</option>
+              {leaveTypes.map(lt => <option key={lt.id} value={lt.id}>{lt.name}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={resetFilters} className="btn-secondary">Réinitialiser</button>
+          <button onClick={applyFilters} className="btn-primary flex items-center gap-2">
+            <Filter size={14} /> Appliquer
+          </button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-10 text-gray-500">Chargement...</div>
+      ) : (
+        <>
+          {/* KPIs */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard icon={Users}        label="Employés concernés"   value={kpis.nb_employes}                       color="bg-blue-600" />
+            <KpiCard icon={Calendar}     label="Total jours approuvés" value={kpis.total_jours ? kpis.total_jours + ' j' : '0 j'} color="bg-green-600" />
+            <KpiCard icon={TrendingUp}   label="Durée moyenne"         value={kpis.moy_duree ? kpis.moy_duree + ' j' : '0 j'}    color="bg-purple-600" />
+            <KpiCard icon={AlertTriangle} label="En attente"           value={kpis.total_en_attente}                 color="bg-yellow-600" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Histogramme par type */}
+            <div className="card">
+              <h2 className="font-semibold text-white mb-4">Jours par type de congé</h2>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={byType} margin={{ top: 5, right: 10, left: 0, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="type_conge" tick={{ fill: '#9ca3af', fontSize: 10 }} angle={-35} textAnchor="end" interval={0} />
+                  <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }} />
+                  <Bar dataKey="total_jours" name="Jours" radius={[4,4,0,0]}>
+                    {byType.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Camembert */}
+            <div className="card">
+              <h2 className="font-semibold text-white mb-4">Répartition par type</h2>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie data={byType} dataKey="total_jours" nameKey="type_conge"
+                    cx="50%" cy="50%" outerRadius={90}
+                    label={({ percent }) => percent > 0.05 ? `${(percent*100).toFixed(0)}%` : ''}>
+                    {byType.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }} />
+                  <Legend formatter={(v) => <span style={{color:'#9ca3af',fontSize:'11px'}}>{v}</span>} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Courbe évolution mensuelle */}
+            {monthly.length > 0 && (
+              <div className="card lg:col-span-2">
+                <h2 className="font-semibold text-white mb-4">Evolution mensuelle</h2>
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={monthly} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="mois" tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                    <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                    <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }} />
+                    <Legend formatter={(v) => <span style={{color:'#9ca3af',fontSize:'11px'}}>{v}</span>} />
+                    <Line type="monotone" dataKey="total_jours" name="Total jours" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6' }} />
+                    <Line type="monotone" dataKey="nb_maladie"  name="Maladie"     stroke="#ef4444" strokeWidth={2} dot={{ fill: '#ef4444' }} />
+                    <Line type="monotone" dataKey="nb_annuel"   name="Congé annuel" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e' }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          {/* Top employés */}
+          {!appliedFilters.employee_id && topEmployees.length > 0 && (
+            <div className="card">
+              <h2 className="font-semibold text-white mb-4 flex items-center gap-2">
+                <AlertTriangle size={16} className="text-yellow-400" />
+                Top 10 — Plus de jours de congé annuel
+              </h2>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-800">
+                    <th className="text-left px-3 py-2 text-gray-400">#</th>
+                    <th className="text-left px-3 py-2 text-gray-400">Employé</th>
+                    <th className="text-left px-3 py-2 text-gray-400">Unité</th>
+                    <th className="text-center px-3 py-2 text-gray-400">Nb demandes</th>
+                    <th className="text-center px-3 py-2 text-gray-400">Total jours</th>
+                    <th className="text-center px-3 py-2 text-gray-400">Maladie</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topEmployees.map((e, i) => (
+                    <tr key={i} className="table-row">
+                      <td className="px-3 py-2 text-gray-500 text-xs">{i+1}</td>
+                      <td className="px-3 py-2">
+                        <p className="text-gray-200 font-medium">{e.nom}</p>
+                        <p className="text-gray-500 text-xs">{e.matricule}</p>
+                      </td>
+                      <td className="px-3 py-2 text-gray-400 text-xs">{e.unite || '—'}</td>
+                      <td className="px-3 py-2 text-center text-gray-300">{e.nb_demandes}</td>
+                      <td className="px-3 py-2 text-center">
+                        <span className={`font-bold ${parseInt(e.total_jours) > 15 ? 'text-red-400' : parseInt(e.total_jours) > 10 ? 'text-yellow-400' : 'text-green-400'}`}>
+                          {e.total_jours || 0} j
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-center text-red-400">{e.nb_maladie}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Tableau détaillé */}
+          {details.length > 0 && (
+            <div className="card overflow-hidden p-0">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+                <h2 className="font-semibold text-white">Détail des demandes ({details.length})</h2>
+              </div>
+              <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-gray-900">
+                    <tr className="border-b border-gray-800">
+                      <th className="text-left px-3 py-2 text-gray-400">Matricule</th>
+                      <th className="text-left px-3 py-2 text-gray-400">Nom</th>
+                      <th className="text-left px-3 py-2 text-gray-400">Unité</th>
+                      <th className="text-left px-3 py-2 text-gray-400">Type</th>
+                      <th className="text-center px-3 py-2 text-gray-400">Début</th>
+                      <th className="text-center px-3 py-2 text-gray-400">Fin</th>
+                      <th className="text-center px-3 py-2 text-gray-400">Jours</th>
+                      <th className="text-center px-3 py-2 text-gray-400">Statut</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {details.map((d, i) => (
+                      <tr key={i} className="table-row">
+                        <td className="px-3 py-2 text-gray-400 text-xs font-mono">{d.matricule}</td>
+                        <td className="px-3 py-2 text-gray-200">{d.nom}</td>
+                        <td className="px-3 py-2 text-gray-500 text-xs">{d.unite || '—'}</td>
+                        <td className="px-3 py-2 text-gray-300 text-xs">{d.type_conge}</td>
+                        <td className="px-3 py-2 text-center text-gray-300 text-xs font-mono">{d.start_date?.slice(0,10)}</td>
+                        <td className="px-3 py-2 text-center text-gray-300 text-xs font-mono">{d.end_date?.slice(0,10)}</td>
+                        <td className="px-3 py-2 text-center text-blue-400 font-bold">{d.days_count}</td>
+                        <td className="px-3 py-2 text-center">
+                          <span className={`badge text-xs ${d.status === 'approved' ? 'bg-green-500/10 text-green-400' : d.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400' : 'bg-red-500/10 text-red-400'}`}>
+                            {d.status === 'approved' ? 'Approuvé' : d.status === 'pending' ? 'En attente' : 'Rejeté'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}

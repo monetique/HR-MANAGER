@@ -1,0 +1,26 @@
+# Dépendances
+node_modules/
+frontend/node_modules/
+
+# Build frontend
+backend/public/
+
+# Variables d'environnement
+.env
+backend/.env
+frontend/.env
+
+# Logs
+*.log
+logs/
+
+# Docker volumes locaux
+postgres_data/
+
+# Fichiers temporaires
+*.tmp
+*.swp
+.DS_Store
+
+# Scripts d'import sensibles (données employés)
+scripts/import/*.csv

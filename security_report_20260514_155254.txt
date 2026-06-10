@@ -1,0 +1,219 @@
+[1m[0;36m
+╔══════════════════════════════════════════════╗
+║     HR Manager — Audit de sécurité           ║
+║     2026-05-14 15:52:54                     ║
+╚══════════════════════════════════════════════╝[0m
+  Rapport : /data/applications/hr-manager/security_report_20260514_155254.txt
+
+
+[1m[0;34m══════════════════════════════════════════════[0m
+[1m[0;34m  1. CREDENTIALS & SECRETS EN CLAIR[0m
+[1m[0;34m══════════════════════════════════════════════[0m
+[0;36m  [INFO][0m Recherche de mots de passe codés en dur dans le code source...
+[0;33m  [WARN][0m Pattern 'password' trouvé 11 fois dans le code
+    [0;33m→ /data/applications/hr-manager/backend/db/postgres.js:8:  password: process.env.PG_PASSWORD,[0m
+    [0;33m→ /data/applications/hr-manager/backend/db/mssql.js:10:        password: process.env.MSSQL_POINTAGE_PASSWORD,[0m
+    [0;33m→ /data/applications/hr-manager/backend/server.js:31:app.use('/api/auth/reset-password', authLimiter);[0m
+    [0;33m→ /data/applications/hr-manager/backend/server.js:62:      const loginRes = await axios.post('http://localhost:' + port + '/api/auth/login', { email: process.env.SYNC_EMAIL || 'admin@monetiquetunisie.com', password: process.env.SYNC_PASSWORD || 'REDACTED_PASSWORD' }).catch(() => null);[0m
+    [0;33m→ /data/applications/hr-manager/backend/services/mail-service.js:33:    auth: cfg.smtp_user ? { user: cfg.smtp_user, pass: cfg.smtp_password } : undefined,[0m
+[0;33m  [WARN][0m Pattern 'Password' trouvé 3 fois dans le code
+    [0;33m→ /data/applications/hr-manager/backend/routes/auth.js:93:  const password = newPassword || require('crypto').randomBytes(8).toString('hex');[0m
+    [0;33m→ /data/applications/hr-manager/backend/routes/auth.js:102:      newPassword: password[0m
+    [0;33m→ /data/applications/hr-manager/frontend/src/api/client.js:38:  changePassword: (currentPassword, newPassword) => api.post('/auth/change-password', { currentPassword, newPassword }),[0m
+[0;33m  [WARN][0m Pattern 'PASSWORD' trouvé 10 fois dans le code
+    [0;33m→ /data/applications/hr-manager/backend/db/postgres.js:8:  password: process.env.PG_PASSWORD,[0m
+    [0;33m→ /data/applications/hr-manager/backend/db/mssql.js:10:        password: process.env.MSSQL_POINTAGE_PASSWORD,[0m
+    [0;33m→ /data/applications/hr-manager/backend/server.js:62:      const loginRes = await axios.post('http://localhost:' + port + '/api/auth/login', { email: process.env.SYNC_EMAIL || 'admin@monetiquetunisie.com', password: process.env.SYNC_PASSWORD || 'REDACTED_PASSWORD' }).catch(() => null);[0m
+    [0;33m→ /data/applications/hr-manager/backend/scripts/seed.js:107:    console.log(`   SuperAdmin : ${process.env.ADMIN_EMAIL || 'admin@monetiquetunisie.com'} / ${process.env.ADMIN_PASSWORD || 'Admin@HR2026'}`);[0m
+    [0;33m→ /data/applications/hr-manager/backend/.env:10:PG_PASSWORD=HrApp@2026![0m
+[0;33m  [WARN][0m Pattern 'SECRET' trouvé 6 fois dans le code
+    [0;33m→ /data/applications/hr-manager/backend/.env:14:JWT_SECRET=AKRSl+m6EvT5Z0IFDZGJUNNf9blpe5yJxy+d4Bcx3Ex0VSWuo/uwvBeMVYscXd392PHLLrZolaAfIX2cDDeBxA==[0m
+    [0;33m→ /data/applications/hr-manager/backend/middleware/auth.js:11:    const decoded = jwt.verify(token, process.env.JWT_SECRET);[0m
+    [0;33m→ /data/applications/hr-manager/backend/routes/auth.js:10:  const token        = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '8h' });[0m
+    [0;33m→ /data/applications/hr-manager/backend/routes/auth.js:11:  const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' });[0m
+    [0;33m→ /data/applications/hr-manager/backend/routes/auth.js:65:    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);[0m
+[0;33m  [WARN][0m Pattern 'JWT_SECRET' trouvé 6 fois dans le code
+    [0;33m→ /data/applications/hr-manager/backend/.env:14:JWT_SECRET=AKRSl+m6EvT5Z0IFDZGJUNNf9blpe5yJxy+d4Bcx3Ex0VSWuo/uwvBeMVYscXd392PHLLrZolaAfIX2cDDeBxA==[0m
+    [0;33m→ /data/applications/hr-manager/backend/middleware/auth.js:11:    const decoded = jwt.verify(token, process.env.JWT_SECRET);[0m
+    [0;33m→ /data/applications/hr-manager/backend/routes/auth.js:10:  const token        = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '8h' });[0m
+    [0;33m→ /data/applications/hr-manager/backend/routes/auth.js:11:  const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' });[0m
+    [0;33m→ /data/applications/hr-manager/backend/routes/auth.js:65:    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);[0m
+[0;36m  [INFO][0m Vérification du fichier .env...
+[0;36m  [INFO][0m Fichier .env présent
+[0;33m  [WARN][0m .env contient des valeurs — vérifier qu'il n'est pas versionné
+[0;36m  [INFO][0m Vérification .gitignore...
+[0;32m  [PASS][0m .env est dans .gitignore
+[0;36m  [INFO][0m Recherche de tokens/clés hardcodées...
+[0;32m  [PASS][0m JWT utilise process.env pour le secret (4 occurrences)
+
+[1m[0;34m══════════════════════════════════════════════[0m
+[1m[0;34m  2. AUTHENTIFICATION & TOKENS JWT[0m
+[1m[0;34m══════════════════════════════════════════════[0m
+[0;36m  [INFO][0m Test de login avec credentials valides...
+[0;32m  [PASS][0m Endpoint /api/auth/login répond (HTTP 200)
+[0;36m  [INFO][0m Test brute-force : 10 tentatives rapides sans blocage...
+[0;31m  [FAIL][0m Pas de rate limiting sur /api/auth/login — brute-force possible
+[0;36m  [INFO][0m Analyse du payload JWT...
+[0;36m  [INFO][0m Payload JWT décodé :
+    {
+      "id": 1,
+      "role": "superadmin",
+      "matricule": "ADM001",
+      "iat": 1778770380,
+      "exp": 1778771280
+    }
+[0;32m  [PASS][0m Durée de vie JWT courte : 900s (≤ 15 min)
+[0;32m  [PASS][0m Algorithme JWT : HS256 (HMAC symétrique)
+[0;36m  [INFO][0m Test accès sans token...
+[0;32m  [PASS][0m API protégée sans token (HTTP 401)
+[0;36m  [INFO][0m Test escalade de privilèges : accès config en tant que RH...
+
+[1m[0;34m══════════════════════════════════════════════[0m
+[1m[0;34m  3. HEADERS DE SÉCURITÉ HTTP[0m
+[1m[0;34m══════════════════════════════════════════════[0m
+[0;36m  [INFO][0m Analyse des headers de réponse HTTP...
+[0;31m  [FAIL][0m Header 'X-Content-Type-Options' ABSENT — vulnérabilité misc
+[0;31m  [FAIL][0m Header 'X-Frame-Options' ABSENT — vulnérabilité misc
+[0;31m  [FAIL][0m Header 'Content-Security-Policy' ABSENT — vulnérabilité XSS
+[0;31m  [FAIL][0m Header 'Strict-Transport-Security' ABSENT — vulnérabilité misc
+[0;31m  [FAIL][0m Header 'Referrer-Policy' ABSENT — vulnérabilité misc
+[0;31m  [FAIL][0m Header 'X-XSS-Protection' ABSENT — vulnérabilité misc
+[0;32m  [PASS][0m Header 'Server' absent (pas de fingerprinting)
+[0;31m  [FAIL][0m Header 'X-Powered-By' expose le framework : X-Powered-By: Express — ajouter app.disable('x-powered-by')
+[0;36m  [INFO][0m Vérification CORS...
+[0;36m  [INFO][0m Pas d'en-tête CORS retourné (normal si frontend même origine)
+
+[1m[0;34m══════════════════════════════════════════════[0m
+[1m[0;34m  4. INJECTION & VALIDATION DES ENTRÉES[0m
+[1m[0;34m══════════════════════════════════════════════[0m
+[0;36m  [INFO][0m Test injection SQL basique sur login...
+[0;32m  [PASS][0m Login résiste à l'injection SQL basique (HTTP 401)
+[0;36m  [INFO][0m Test injection NoSQL...
+[0;32m  [PASS][0m Résiste à l'injection NoSQL basique (HTTP 401)
+[0;36m  [INFO][0m Test XSS dans les paramètres employé...
+[0;32m  [PASS][0m Payload XSS non reflété dans la réponse
+[0;36m  [INFO][0m Test path traversal...
+[0;31m  [FAIL][0m Path traversal possible — HTTP 200 sur /../etc/passwd
+[0;36m  [INFO][0m Test IDOR : accès à un employé avec ID arbitraire...
+
+[1m[0;34m══════════════════════════════════════════════[0m
+[1m[0;34m  5. CONFIGURATION DOCKER & SYSTÈME[0m
+[1m[0;34m══════════════════════════════════════════════[0m
+[0;36m  [INFO][0m Analyse du docker-compose.yml...
+[0;32m  [PASS][0m Pas de mode privileged dans docker-compose
+[0;32m  [PASS][0m Docker socket non monté
+[0;33m  [WARN][0m 1 variable(s) sensible(s) définies en clair dans docker-compose.yml
+    [0;33m→ POSTGRES_PASSWORD: ${PG_PASSWORD:-REDACTED_PASSWORD}[0m
+[0;32m  [PASS][0m docker-compose utilise env_file pour les secrets
+[0;36m  [INFO][0m Ports exposés des conteneurs Docker...
+[0;36m  [INFO][0m Conteneurs actifs et ports :
+    hr_manager_app: 0.0.0.0:3007->5005/tcp, [::]:3007->5005/tcp
+    hr_manager_db: 127.0.0.1:5441->5432/tcp
+    smt-cockpit-app: 0.0.0.0:3005->3000/tcp, [::]:3005->3000/tcp
+    web-gestion-processus: 0.0.0.0:3004->80/tcp, [::]:3004->80/tcp
+    api-gestion-processus: 0.0.0.0:5003->4000/tcp, [::]:5003->4000/tcp
+    smt-cockpit-db: 0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+    stock_management_app: 0.0.0.0:3006->3000/tcp, [::]:3006->3000/tcp
+    stock_management_db: 0.0.0.0:5440->5432/tcp, [::]:5440->5432/tcp
+    gestion_commerciale_backend: 0.0.0.0:5001->5000/tcp, [::]:5001->5000/tcp
+    gestion_commerciale_db: 0.0.0.0:5433->5432/tcp, [::]:5433->5432/tcp
+    asset_manager_db: 0.0.0.0:5436->5432/tcp, [::]:5436->5432/tcp
+    sim_manager_db: 0.0.0.0:5435->5432/tcp, [::]:5435->5432/tcp
+    sim_manager_frontend: 0.0.0.0:3002->80/tcp, [::]:3002->80/tcp
+    sim_manager_backend: 3001/tcp
+    asset_manager_frontend: 0.0.0.0:3003->80/tcp, [::]:3003->80/tcp
+    asset_manager_backend: 0.0.0.0:5002->5002/tcp, [::]:5002->5002/tcp
+    gestion_commerciale_frontend: 0.0.0.0:3001->80/tcp, [::]:3001->80/tcp
+    postgres-gestion-processus: 0.0.0.0:5438->5432/tcp, [::]:5438->5432/tcp
+[0;31m  [FAIL][0m PostgreSQL exposé sur 0.0.0.0 — accessible depuis le réseau ! Restreindre à 127.0.0.1
+[0;36m  [INFO][0m Vérification des permissions sur les fichiers sensibles...
+[0;33m  [WARN][0m /data/applications/hr-manager/.env — permissions 644 root:root (lisible par others)
+[0;32m  [PASS][0m /data/applications/hr-manager/docker-compose.yml — permissions 640 root:root
+[0;32m  [PASS][0m /data/applications/hr-manager/backend/db/postgres.js — permissions 640 root:root
+
+[1m[0;34m══════════════════════════════════════════════[0m
+[1m[0;34m  6. BASE DE DONNÉES POSTGRESQL[0m
+[1m[0;34m══════════════════════════════════════════════[0m
+[0;36m  [INFO][0m Test de connexion PostgreSQL...
+[0;32m  [PASS][0m Connexion PostgreSQL OK
+[0;36m  [INFO][0m Vérification du mot de passe par défaut PostgreSQL...
+[0;36m  [INFO][0m Vérification des rôles et privilèges...
+[0;36m  [INFO][0m Rôles PostgreSQL :
+         List of roles
+     Role name | Attributes 
+    -----------+------------
+     hr_app    | 
+     hr_user   | Superuser
+[0;36m  [INFO][0m Vérification des connexions actives...
+[0;36m  [INFO][0m Connexions actives :
+     nb | usename 
+    ----+---------
+      4 | 
+      1 | hr_app
+      2 | hr_user
+    (3 rows)
+[0;36m  [INFO][0m Recherche de données sensibles non chiffrées...
+[0;36m  [INFO][0m Colonnes 'password' trouvées :
+         column_name     |   table_name    
+    ---------------------+-----------------
+     subpasswordrequired | pg_subscription
+     rolpassword         | pg_roles
+     passwd              | pg_user
+     password_hash       | employees
+     rolpassword         | pg_authid
+     passwd              | pg_shadow
+    (6 rows)
+
+[1m[0;34m══════════════════════════════════════════════[0m
+[1m[0;34m  7. DÉPENDANCES NPM VULNÉRABLES[0m
+[1m[0;34m══════════════════════════════════════════════[0m
+[0;36m  [INFO][0m Audit des dépendances npm (backend)...
+[0;36m  [INFO][0m npm audit résultat : Critical: 0, High: 5, Moderate: 0, Low: 0
+Total packages: 0
+[0;33m  [WARN][0m 5 vulnérabilité(s) HIGH dans les dépendances npm — exécuter : npm audit fix
+
+[1m[0;34m══════════════════════════════════════════════[0m
+[1m[0;34m  8. CONTRÔLE D'ACCÈS (RBAC)[0m
+[1m[0;34m══════════════════════════════════════════════[0m
+
+[1m[0;34m══════════════════════════════════════════════[0m
+[1m[0;34m  9. TLS & CHIFFREMENT EN TRANSIT[0m
+[1m[0;34m══════════════════════════════════════════════[0m
+[0;36m  [INFO][0m Vérification HTTPS...
+[0;31m  [FAIL][0m HTTPS non disponible — données transitent en clair (HTTP seulement)
+[0;36m  [INFO][0m Vérification Nginx (reverse proxy TLS)...
+[0;32m  [PASS][0m Nginx actif — reverse proxy probablement configuré
+[0;32m  [PASS][0m Certificat SSL configuré dans Nginx
+
+[1m[0;34m══════════════════════════════════════════════[0m
+[1m[0;34m  10. LOGS & MONITORING[0m
+[1m[0;34m══════════════════════════════════════════════[0m
+[0;36m  [INFO][0m Vérification des logs applicatifs...
+[0;36m  [INFO][0m Lignes de logs disponibles : 90
+[0;36m  [INFO][0m Recherche d'erreurs 500 récentes dans les logs...
+[0;33m  [WARN][0m Erreurs récentes dans les logs :
+    ✅ HR Manager API → http://0.0.0.0:5005
+[0;36m  [INFO][0m Vérification de l'exposition d'informations dans les erreurs...
+[0;32m  [PASS][0m Pas de stack trace exposée dans les erreurs API
+
+[1m[0;34m══════════════════════════════════════════════[0m
+[1m[0;34m  RÉSUMÉ FINAL[0m
+[1m[0;34m══════════════════════════════════════════════[0m
+
+[1m  Résultats :[0m
+  [0;32m✔ PASS[0m : 19 / 40
+  [0;31m✘ FAIL[0m : 11 / 40
+  [0;33m⚠ WARN[0m : 10 / 40
+
+[0;31m[1m  ⚠  NIVEAU DE RISQUE : ÉLEVÉ — Actions immédiates requises[0m
+
+[0;36m  Rapport complet sauvegardé dans : /data/applications/hr-manager/security_report_20260514_155254.txt[0m
+[0;36m  Répertoire application : /data/applications/hr-manager[0m
+
+  Prochaines étapes recommandées :
+  1. Changer tous les mots de passe exposés
+  2. Ajouter helmet + express-rate-limit dans server.js
+  3. Configurer HTTPS via Nginx
+  4. Exécuter : npm audit fix dans le répertoire backend
+  5. Mettre en place un fichier .env non versionné
+
